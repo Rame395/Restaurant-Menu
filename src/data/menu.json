@@ -1,0 +1,58 @@
+{
+  "categories": [
+    { "id": "c1", "name": "Momo", "image_url": "https://images.unsplash.com/photo-1625220194771-7ebdea0b70b9?auto=format&fit=crop&w=200&q=80" },
+    { "id": "c2", "name": "Pizza", "image_url": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=200&q=80" },
+    { "id": "c3", "name": "Burgers", "image_url": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=200&q=80" },
+    { "id": "c4", "name": "Beverages", "image_url": "https://images.unsplash.com/photo-1628557044797-f21a177c37ec?auto=format&fit=crop&w=200&q=80" }
+  ],
+  "items": [
+    {
+      "id": "i1",
+      "category_id": "c1",
+      "name": "Chicken Steamed Momo",
+      "description": "Authentic Himalayan dumplings filled with seasoned minced chicken. Served with spicy sesame chutney.",
+      "price": 8.99,
+      "image_url": "https://images.unsplash.com/photo-1625220194771-7ebdea0b70b9?auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      "id": "i2",
+      "category_id": "c1",
+      "name": "Vegetable Fried Momo",
+      "description": "Crispy fried dumplings stuffed with mixed fresh vegetables and aromatic spices.",
+      "price": 7.99,
+      "image_url": "https://images.unsplash.com/photo-1541529086526-db283c563270?auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      "id": "i3",
+      "category_id": "c2",
+      "name": "Margherita Pizza",
+      "description": "Classic delight with 100% real mozzarella cheese, fresh basil, and signature tomato sauce.",
+      "price": 12.99,
+      "image_url": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      "id": "i4",
+      "category_id": "c2",
+      "name": "Pepperoni Feast",
+      "description": "Loaded with pepperoni and extra cheese on our fresh hand-tossed crust.",
+      "price": 15.99,
+      "image_url": "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      "id": "i5",
+      "category_id": "c3",
+      "name": "Classic Smash Burger",
+      "description": "Double beef patty, melted cheddar, house sauce, pickles, and brioche bun.",
+      "price": 11.99,
+      "image_url": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      "id": "i6",
+      "category_id": "c4",
+      "name": "Mango Lassi",
+      "description": "Refreshing traditional yogurt-based drink with fresh mango pulp.",
+      "price": 4.99,
+      "image_url": "https://images.unsplash.com/photo-1628557044797-f21a177c37ec?auto=format&fit=crop&w=500&q=80"
+    }
+  ]
+}
