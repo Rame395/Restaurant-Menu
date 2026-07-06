@@ -10,7 +10,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
-  const [activeTab, setActiveTab] = useState<'categories'|'items'>('categories');
+  const [activeTab, setActiveTab] = useState<'dashboard'|'categories'|'items'>('dashboard');
 
   // Forms state
   const [catName, setCatName] = useState('');
@@ -107,125 +107,242 @@ export default function AdminDashboard() {
   }
 
   async function deleteCategory(id: string) {
+    if (!confirm('Are you sure you want to delete this category? This will also delete all items in it.')) return;
     await supabase.from('categories').delete().eq('id', id);
     setCategories(categories.filter(c => c.id !== id));
+    setItems(items.filter(i => i.category_id !== id));
   }
 
   async function deleteItem(id: string) {
+    if (!confirm('Are you sure you want to delete this item?')) return;
     await supabase.from('menu_items').delete().eq('id', id);
     setItems(items.filter(i => i.id !== id));
   }
 
-  if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-white">Loading...</div>;
+  if (loading) return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+       <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8 bg-zinc-900/50 p-4 md:p-6 rounded-2xl border border-zinc-800">
-          <h1 className="text-2xl md:text-3xl font-bold text-amber-500">Menu Dashboard</h1>
-          <button onClick={handleLogout} className="text-zinc-400 hover:text-white bg-zinc-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors">Logout</button>
-        </div>
-
-        <div className="flex gap-4 mb-8 border-b border-zinc-800 pb-4">
-          <button onClick={() => setActiveTab('categories')} className={`px-5 py-2.5 rounded-lg font-semibold transition-colors ${activeTab === 'categories' ? 'bg-amber-500 text-black' : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200'}`}>Categories</button>
-          <button onClick={() => setActiveTab('items')} className={`px-5 py-2.5 rounded-lg font-semibold transition-colors ${activeTab === 'items' ? 'bg-amber-500 text-black' : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200'}`}>Menu Items</button>
-        </div>
-
-        {activeTab === 'categories' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 h-fit sticky top-6">
-              <h2 className="text-xl font-bold mb-4">Add Category</h2>
-              <form onSubmit={addCategory} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-zinc-500 mb-1 uppercase tracking-wider">Name</label>
-                  <input required placeholder="e.g. Momo" value={catName} onChange={e=>setCatName(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-sm" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-zinc-500 mb-1 uppercase tracking-wider">Upload Image</label>
-                  <input type="file" accept="image/*" onChange={e=>setCatImageFile(e.target.files?.[0] || null)} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-500 file:text-black hover:file:bg-amber-600" />
-                </div>
-                <div className="text-center text-xs text-zinc-500">- OR -</div>
-                <div>
-                  <label className="block text-xs font-medium text-zinc-500 mb-1 uppercase tracking-wider">Image URL</label>
-                  <input placeholder="https://..." value={catImage} onChange={e=>setCatImage(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-sm" />
-                </div>
-                <button disabled={isUploading} type="submit" className="w-full bg-amber-500 hover:bg-amber-600 transition-colors text-black font-bold py-2.5 rounded-lg mt-2 disabled:opacity-50">
-                  {isUploading ? 'Uploading...' : 'Create Category'}
-                </button>
-              </form>
-            </div>
-            <div className="lg:col-span-2 space-y-4">
-              {categories.length === 0 && <p className="text-zinc-500">No categories found.</p>}
-              {categories.map(c => (
-                <div key={c.id} className="bg-zinc-900/50 p-4 rounded-xl border border-zinc-800 flex justify-between items-center hover:border-zinc-700 transition-colors">
-                  <div className="flex items-center gap-4">
-                    {c.image_url && <img src={c.image_url} alt={c.name} className="w-14 h-14 rounded-full object-cover border border-zinc-800" />}
-                    <span className="font-bold text-lg">{c.name}</span>
-                  </div>
-                  <button onClick={() => deleteCategory(c.id)} className="text-red-500 hover:text-red-400 bg-red-500/10 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors">Delete</button>
-                </div>
-              ))}
-            </div>
+    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row font-sans text-gray-900">
+      {/* Sidebar */}
+      <aside className="w-full md:w-64 bg-white border-r border-gray-200 flex-shrink-0 md:h-screen sticky top-0 overflow-y-auto">
+        <div className="p-6 border-b border-gray-200 flex items-center justify-between md:justify-start">
+          <div className="flex items-center gap-3">
+             <div className="w-8 h-8 rounded bg-[#A07A60] flex items-center justify-center text-white font-serif font-bold text-xs shadow-sm border border-[#906a50]">EN</div>
+             <span className="font-bold text-lg tracking-tight">Admin Console</span>
           </div>
-        )}
+          <button onClick={handleLogout} className="md:hidden text-sm text-gray-500 font-medium hover:text-gray-900 cursor-pointer">Logout</button>
+        </div>
+        <nav className="p-4 space-y-1 overflow-x-auto md:overflow-visible flex md:block whitespace-nowrap scrollbar-hide">
+          <button onClick={() => setActiveTab('dashboard')} className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer w-full text-left ${activeTab === 'dashboard' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}>
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+            Dashboard
+          </button>
+          <button onClick={() => setActiveTab('categories')} className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer w-full text-left ${activeTab === 'categories' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}>
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+            Categories
+          </button>
+          <button onClick={() => setActiveTab('items')} className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer w-full text-left ${activeTab === 'items' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}>
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            Menu Items
+          </button>
+        </nav>
+        <div className="hidden md:block absolute bottom-0 w-64 p-4 border-t border-gray-200 bg-white">
+           <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors cursor-pointer w-full text-left">
+             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+             Log Out
+           </button>
+        </div>
+      </aside>
 
-        {activeTab === 'items' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 h-fit sticky top-6">
-              <h2 className="text-xl font-bold mb-4">Add Item</h2>
-              <form onSubmit={addItem} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-zinc-500 mb-1 uppercase tracking-wider">Category</label>
-                  <select required value={itemCat} onChange={e=>setItemCat(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-sm">
-                    <option value="">Select Category...</option>
-                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-zinc-500 mb-1 uppercase tracking-wider">Name</label>
-                  <input required placeholder="e.g. Chicken Steamed Momo" value={itemName} onChange={e=>setItemName(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-sm" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-zinc-500 mb-1 uppercase tracking-wider">Description</label>
-                  <textarea placeholder="Delicious description..." value={itemDesc} onChange={e=>setItemDesc(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-sm h-24 resize-none" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-zinc-500 mb-1 uppercase tracking-wider">Price ($)</label>
-                  <input required type="number" step="0.01" placeholder="8.99" value={itemPrice} onChange={e=>setItemPrice(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-sm" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-zinc-500 mb-1 uppercase tracking-wider">Upload Image</label>
-                  <input type="file" accept="image/*" onChange={e=>setItemImageFile(e.target.files?.[0] || null)} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-500 file:text-black hover:file:bg-amber-600" />
-                </div>
-                <div className="text-center text-xs text-zinc-500">- OR -</div>
-                <div>
-                  <label className="block text-xs font-medium text-zinc-500 mb-1 uppercase tracking-wider">Image URL</label>
-                  <input placeholder="https://..." value={itemImage} onChange={e=>setItemImage(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-sm" />
-                </div>
-                <button disabled={isUploading} type="submit" className="w-full bg-amber-500 hover:bg-amber-600 transition-colors text-black font-bold py-2.5 rounded-lg mt-2 disabled:opacity-50">
-                  {isUploading ? 'Uploading...' : 'Create Item'}
-                </button>
-              </form>
-            </div>
-            <div className="lg:col-span-2 space-y-4">
-              {items.length === 0 && <p className="text-zinc-500">No items found.</p>}
-              {items.map(i => (
-                <div key={i.id} className="bg-zinc-900/50 p-4 rounded-xl border border-zinc-800 flex justify-between items-center hover:border-zinc-700 transition-colors">
-                  <div className="flex items-center gap-4">
-                    {i.image_url && <img src={i.image_url} alt={i.name} className="w-16 h-16 rounded-lg object-cover border border-zinc-800" />}
-                    <div>
-                      <span className="font-bold block text-lg">{i.name}</span>
-                      <span className="text-amber-500 font-medium">${i.price}</span>
-                      <span className="text-zinc-500 text-xs ml-3 bg-zinc-800 px-2 py-1 rounded">{categories.find(c => c.id === i.category_id)?.name}</span>
-                    </div>
+      {/* Main Content */}
+      <main className="flex-1 p-4 md:p-8">
+        <div className="max-w-5xl mx-auto space-y-8">
+           
+           {activeTab === 'dashboard' && (
+            <div>
+              <h1 className="text-2xl font-bold mb-6 text-gray-900 tracking-tight">Overview</h1>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-5">
+                  <div className="w-14 h-14 bg-blue-50 border border-blue-100 rounded-full flex items-center justify-center text-blue-600">
+                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
                   </div>
-                  <button onClick={() => deleteItem(i.id)} className="text-red-500 hover:text-red-400 bg-red-500/10 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors">Delete</button>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 mb-0.5">Total Categories</p>
+                    <p className="text-3xl font-bold text-gray-900 leading-none">{categories.length}</p>
+                  </div>
                 </div>
-              ))}
+                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-5">
+                  <div className="w-14 h-14 bg-green-50 border border-green-100 rounded-full flex items-center justify-center text-green-600">
+                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 mb-0.5">Total Menu Items</p>
+                    <p className="text-3xl font-bold text-gray-900 leading-none">{items.length}</p>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+
+          {activeTab === 'categories' && (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Categories</h1>
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-1">
+                  <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm md:sticky md:top-6">
+                    <h2 className="text-lg font-bold text-gray-900 mb-4">Add New Category</h2>
+                    <form onSubmit={addCategory} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                        <input required placeholder="e.g. Salads" value={catName} onChange={e=>setCatName(e.target.value)} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Upload Image</label>
+                        <input type="file" accept="image/*" onChange={e=>setCatImageFile(e.target.files?.[0] || null)} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2 text-sm file:mr-4 file:py-1.5 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" />
+                      </div>
+                      <div className="text-center text-xs text-gray-400 font-medium">- OR -</div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                        <input placeholder="https://..." value={catImage} onChange={e=>setCatImage(e.target.value)} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+                      </div>
+                      <button disabled={isUploading} type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg mt-2 disabled:opacity-50 transition-colors cursor-pointer shadow-sm">
+                        {isUploading ? 'Uploading...' : 'Create Category'}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-2">
+                  <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
+                          <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {categories.length === 0 && <tr><td colSpan={2} className="px-6 py-8 text-center text-gray-500 text-sm">No categories found. Create one to get started.</td></tr>}
+                        {categories.map(c => (
+                          <tr key={c.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="flex-shrink-0 h-11 w-11">
+                                  {c.image_url ? <img className="h-11 w-11 rounded-lg object-cover border border-gray-200 shadow-sm" src={c.image_url} alt="" /> : <div className="h-11 w-11 rounded-lg bg-gray-100 border border-gray-200"></div>}
+                                </div>
+                                <div className="ml-4">
+                                  <div className="text-sm font-semibold text-gray-900">{c.name}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <button onClick={() => deleteCategory(c.id)} className="text-red-600 hover:text-red-800 font-semibold bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-md transition-colors cursor-pointer border border-transparent hover:border-red-200">Delete</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'items' && (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Menu Items</h1>
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-1">
+                  <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm md:sticky md:top-6">
+                    <h2 className="text-lg font-bold text-gray-900 mb-4">Add New Item</h2>
+                    <form onSubmit={addItem} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                        <select required value={itemCat} onChange={e=>setItemCat(e.target.value)} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                          <option value="">Select a category...</option>
+                          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                        <input required placeholder="e.g. Margherita Pizza" value={itemName} onChange={e=>setItemName(e.target.value)} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea placeholder="Brief description..." value={itemDesc} onChange={e=>setItemDesc(e.target.value)} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm h-20 resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Price (Rs.)</label>
+                        <input required type="number" step="0.01" placeholder="0.00" value={itemPrice} onChange={e=>setItemPrice(e.target.value)} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Upload Image</label>
+                        <input type="file" accept="image/*" onChange={e=>setItemImageFile(e.target.files?.[0] || null)} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2 text-sm file:mr-4 file:py-1.5 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" />
+                      </div>
+                      <div className="text-center text-xs text-gray-400 font-medium">- OR -</div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                        <input placeholder="https://..." value={itemImage} onChange={e=>setItemImage(e.target.value)} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+                      </div>
+                      <button disabled={isUploading} type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg mt-2 disabled:opacity-50 transition-colors cursor-pointer shadow-sm">
+                        {isUploading ? 'Uploading...' : 'Create Item'}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-2">
+                  <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
+                          <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
+                          <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {items.length === 0 && <tr><td colSpan={3} className="px-6 py-8 text-center text-gray-500 text-sm">No items found. Create one to get started.</td></tr>}
+                        {items.map(i => (
+                          <tr key={i.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="flex items-center">
+                                <div className="flex-shrink-0 h-11 w-11">
+                                  {i.image_url ? <img className="h-11 w-11 rounded-lg object-cover border border-gray-200 shadow-sm" src={i.image_url} alt="" /> : <div className="h-11 w-11 rounded-lg bg-gray-100 border border-gray-200"></div>}
+                                </div>
+                                <div className="ml-4">
+                                  <div className="text-sm font-semibold text-gray-900">{i.name}</div>
+                                  <div className="text-xs text-gray-500 mt-0.5 max-w-[160px] truncate">{categories.find(c => c.id === i.category_id)?.name}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">Rs. {i.price}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <button onClick={() => deleteItem(i.id)} className="text-red-600 hover:text-red-800 font-semibold bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-md transition-colors cursor-pointer border border-transparent hover:border-red-200">Delete</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 }
