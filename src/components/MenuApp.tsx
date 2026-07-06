@@ -7,6 +7,8 @@ import MenuGrid from './MenuGrid';
 export default function MenuApp({ initialData }: { initialData: MenuData }) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeSize, setActiveSize] = useState<string | null>(null);
+  const [activeTag, setActiveTag] = useState<string | null>(null);
 
   const activeCategoryData = initialData.categories.find(c => c.id === activeCategory);
   
@@ -15,12 +17,18 @@ export default function MenuApp({ initialData }: { initialData: MenuData }) {
     searchQuery.trim() === '' || (cat.name || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredItems = initialData.items.filter(item => 
-    item.category_id === activeCategory &&
-    (searchQuery.trim() === '' || 
-     (item.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
-     (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase())))
-  );
+  const baseCategoryItems = initialData.items.filter(item => item.category_id === activeCategory);
+  
+  // Extract unique sizes and tags for the active category
+  const availableSizes = Array.from(new Set(baseCategoryItems.map(i => i.size).filter(Boolean))) as string[];
+  const availableTags = Array.from(new Set(baseCategoryItems.flatMap(i => i.tags || []).filter(Boolean))) as string[];
+
+  const filteredItems = baseCategoryItems.filter(item => {
+    const matchesSearch = searchQuery.trim() === '' || (item.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesSize = activeSize === null || item.size === activeSize;
+    const matchesTag = activeTag === null || (item.tags && item.tags.includes(activeTag));
+    return matchesSearch && matchesSize && matchesTag;
+  });
 
   const handleCloseSearch = () => {
     setIsSearchOpen(false);
@@ -30,11 +38,15 @@ export default function MenuApp({ initialData }: { initialData: MenuData }) {
   const handleCategoryClick = (catId: string) => {
     setActiveCategory(catId);
     setSearchQuery(''); 
+    setActiveSize(null);
+    setActiveTag(null);
   };
 
   const handleBackClick = () => {
     setActiveCategory(null);
     setSearchQuery(''); 
+    setActiveSize(null);
+    setActiveTag(null);
   };
 
   return (
@@ -169,7 +181,48 @@ export default function MenuApp({ initialData }: { initialData: MenuData }) {
             </div>
           )}
 
-          <div className="pt-2 animate-slide-up" style={{ animationDelay: '0.05s' }}>
+          {/* Filter Bar */}
+          {(availableSizes.length > 0 || availableTags.length > 0) && (
+            <div className="px-4 py-3 border-b border-neutral-900/60 bg-neutral-900/20 overflow-x-auto whitespace-nowrap scrollbar-hide flex gap-2 items-center">
+              <span className="text-[12px] font-bold text-neutral-500 uppercase tracking-wider mr-2">Filters:</span>
+              
+              {availableSizes.length > 0 && (
+                <div className="flex gap-2 border-r border-neutral-800 pr-4 mr-2">
+                  {availableSizes.map(size => (
+                    <button
+                      key={size}
+                      onClick={() => setActiveSize(activeSize === size ? null : size)}
+                      className={`px-3 py-1 rounded-full text-[13px] font-bold transition-all border ${
+                        activeSize === size 
+                          ? 'bg-[#c21820] text-white border-[#c21820] shadow-[0_0_10px_rgba(194,24,32,0.4)]' 
+                          : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600'
+                      }`}
+                    >
+                      Size: {size}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {availableTags.map(tag => (
+                <button
+                  key={tag}
+                  onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+                  className={`px-3 py-1 rounded-full text-[13px] font-bold transition-all border flex items-center gap-1 ${
+                    activeTag === tag 
+                      ? 'bg-neutral-800 text-white border-neutral-500' 
+                      : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600'
+                  }`}
+                >
+                  {tag.toLowerCase() === 'veg' && <span className={`w-2 h-2 rounded-full ${activeTag === tag ? 'bg-green-400' : 'bg-green-600'}`}></span>}
+                  {tag.toLowerCase() === 'non-veg' && <span className={`w-2 h-2 rounded-full ${activeTag === tag ? 'bg-red-400' : 'bg-red-600'}`}></span>}
+                  {tag}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="pt-4 pb-8 animate-slide-up" style={{ animationDelay: '0.05s' }}>
             <MenuGrid items={filteredItems} />
           </div>
         </div>

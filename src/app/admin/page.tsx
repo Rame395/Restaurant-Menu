@@ -23,8 +23,19 @@ export default function AdminDashboard() {
   const [itemImage, setItemImage] = useState('');
   const [itemImageFile, setItemImageFile] = useState<File | null>(null);
   const [itemCat, setItemCat] = useState('');
+  const [itemSize, setItemSize] = useState('');
+  const [itemTags, setItemTags] = useState('');
 
   const [isUploading, setIsUploading] = useState(false);
+
+  const [toast, setToast] = useState<{message: string, type: 'success'|'error'} | null>(null);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+
+  const showToast = (message: string, type: 'success'|'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   useEffect(() => {
     checkUser();
@@ -64,7 +75,7 @@ export default function AdminDashboard() {
       .upload(filePath, file);
 
     if (uploadError) {
-      alert('Error uploading image: ' + uploadError.message);
+      showToast('Error uploading image: ' + uploadError.message, 'error');
       return null;
     }
 
@@ -72,7 +83,20 @@ export default function AdminDashboard() {
     return data.publicUrl;
   }
 
-  async function addCategory(e: React.FormEvent) {
+  // --- Category Actions ---
+  function resetCategoryForm() {
+    setCatName(''); setCatImage(''); setCatImageFile(null); setEditingCategoryId(null);
+  }
+
+  function handleEditCategory(c: Category) {
+    setEditingCategoryId(c.id);
+    setCatName(c.name);
+    setCatImage(c.image_url || '');
+    setCatImageFile(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function saveCategory(e: React.FormEvent) {
     e.preventDefault();
     setIsUploading(true);
     let finalImageUrl = catImage;
@@ -81,28 +105,23 @@ export default function AdminDashboard() {
       if (uploadedUrl) finalImageUrl = uploadedUrl;
     }
 
-    const { data, error } = await supabase.from('categories').insert([{ name: catName, image_url: finalImageUrl }]).select();
-    if (data) setCategories([...categories, data[0]]);
-    if (error) alert('Error: ' + error.message);
-    setCatName(''); setCatImage(''); setCatImageFile(null);
-    setIsUploading(false);
-  }
-
-  async function addItem(e: React.FormEvent) {
-    e.preventDefault();
-    setIsUploading(true);
-    let finalImageUrl = itemImage;
-    if (itemImageFile) {
-      const uploadedUrl = await uploadImage(itemImageFile);
-      if (uploadedUrl) finalImageUrl = uploadedUrl;
+    if (editingCategoryId) {
+      const { data, error } = await supabase.from('categories').update({ name: catName, image_url: finalImageUrl }).eq('id', editingCategoryId).select();
+      if (data) {
+        setCategories(categories.map(c => c.id === editingCategoryId ? data[0] : c));
+        showToast('Category updated successfully!');
+        resetCategoryForm();
+      }
+      if (error) showToast('Error: ' + error.message, 'error');
+    } else {
+      const { data, error } = await supabase.from('categories').insert([{ name: catName, image_url: finalImageUrl }]).select();
+      if (data) {
+        setCategories([...categories, data[0]]);
+        showToast('Category added successfully!');
+        resetCategoryForm();
+      }
+      if (error) showToast('Error: ' + error.message, 'error');
     }
-
-    const { data, error } = await supabase.from('menu_items').insert([{ 
-      name: itemName, description: itemDesc, price: parseFloat(itemPrice), image_url: finalImageUrl, category_id: itemCat 
-    }]).select();
-    if (data) setItems([...items, data[0]]);
-    if (error) alert('Error: ' + error.message);
-    setItemName(''); setItemDesc(''); setItemPrice(''); setItemImage(''); setItemImageFile(null); setItemCat('');
     setIsUploading(false);
   }
 
@@ -111,12 +130,71 @@ export default function AdminDashboard() {
     await supabase.from('categories').delete().eq('id', id);
     setCategories(categories.filter(c => c.id !== id));
     setItems(items.filter(i => i.category_id !== id));
+    showToast('Category deleted', 'success');
+  }
+
+  // --- Item Actions ---
+  function resetItemForm() {
+    setItemName(''); setItemDesc(''); setItemPrice(''); setItemImage(''); setItemImageFile(null); setItemCat(''); setItemSize(''); setItemTags(''); setEditingItemId(null);
+  }
+
+  function handleEditItem(i: MenuItem) {
+    setEditingItemId(i.id);
+    setItemName(i.name);
+    setItemDesc(i.description || '');
+    setItemPrice(i.price.toString());
+    setItemImage(i.image_url || '');
+    setItemImageFile(null);
+    setItemCat(i.category_id);
+    setItemSize(i.size || '');
+    setItemTags(i.tags ? i.tags.join(', ') : '');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function saveItem(e: React.FormEvent) {
+    e.preventDefault();
+    setIsUploading(true);
+    let finalImageUrl = itemImage;
+    if (itemImageFile) {
+      const uploadedUrl = await uploadImage(itemImageFile);
+      if (uploadedUrl) finalImageUrl = uploadedUrl;
+    }
+
+    const payload = { 
+      name: itemName, 
+      description: itemDesc, 
+      price: parseFloat(itemPrice), 
+      image_url: finalImageUrl, 
+      category_id: itemCat,
+      size: itemSize || null,
+      tags: itemTags ? itemTags.split(',').map(t => t.trim()).filter(Boolean) : null
+    };
+
+    if (editingItemId) {
+      const { data, error } = await supabase.from('menu_items').update(payload).eq('id', editingItemId).select();
+      if (data) {
+        setItems(items.map(i => i.id === editingItemId ? data[0] : i));
+        showToast('Item updated successfully!');
+        resetItemForm();
+      }
+      if (error) showToast('Error: ' + error.message, 'error');
+    } else {
+      const { data, error } = await supabase.from('menu_items').insert([payload]).select();
+      if (data) {
+        setItems([...items, data[0]]);
+        showToast('Item added successfully!');
+        resetItemForm();
+      }
+      if (error) showToast('Error: ' + error.message, 'error');
+    }
+    setIsUploading(false);
   }
 
   async function deleteItem(id: string) {
     if (!confirm('Are you sure you want to delete this item?')) return;
     await supabase.from('menu_items').delete().eq('id', id);
     setItems(items.filter(i => i.id !== id));
+    showToast('Item deleted', 'success');
   }
 
   if (loading) return (
@@ -127,8 +205,20 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row font-sans text-gray-900">
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-xl text-sm font-bold flex items-center gap-2 animate-bounce-in ${toast.type === 'error' ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}`}>
+          {toast.type === 'error' ? (
+             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          ) : (
+             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+          )}
+          {toast.message}
+        </div>
+      )}
+
       {/* Sidebar */}
-      <aside className="w-full md:w-64 bg-white border-r border-gray-200 flex-shrink-0 md:h-screen sticky top-0 overflow-y-auto">
+      <aside className="w-full md:w-64 bg-white border-r border-gray-200 flex-shrink-0 md:h-screen sticky top-0 overflow-y-auto z-10">
         <div className="p-6 border-b border-gray-200 flex items-center justify-between md:justify-start">
           <div className="flex items-center gap-3">
              <div className="w-8 h-8 rounded bg-[#A07A60] flex items-center justify-center text-white font-serif font-bold text-xs shadow-sm border border-[#906a50]">EN</div>
@@ -196,9 +286,9 @@ export default function AdminDashboard() {
               
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-1">
-                  <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm md:sticky md:top-6">
-                    <h2 className="text-lg font-bold text-gray-900 mb-4">Add New Category</h2>
-                    <form onSubmit={addCategory} className="space-y-4">
+                  <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm md:sticky md:top-6 transition-all">
+                    <h2 className="text-lg font-bold text-gray-900 mb-4">{editingCategoryId ? 'Edit Category' : 'Add New Category'}</h2>
+                    <form onSubmit={saveCategory} className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                         <input required placeholder="e.g. Salads" value={catName} onChange={e=>setCatName(e.target.value)} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
@@ -212,9 +302,16 @@ export default function AdminDashboard() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
                         <input placeholder="https://..." value={catImage} onChange={e=>setCatImage(e.target.value)} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
                       </div>
-                      <button disabled={isUploading} type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg mt-2 disabled:opacity-50 transition-colors cursor-pointer shadow-sm">
-                        {isUploading ? 'Uploading...' : 'Create Category'}
-                      </button>
+                      <div className="flex gap-3 pt-2">
+                        <button disabled={isUploading} type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg disabled:opacity-50 transition-colors cursor-pointer shadow-sm">
+                          {isUploading ? 'Saving...' : (editingCategoryId ? 'Update Category' : 'Create Category')}
+                        </button>
+                        {editingCategoryId && (
+                          <button type="button" onClick={resetCategoryForm} className="px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 rounded-lg transition-colors cursor-pointer border border-gray-300">
+                            Cancel
+                          </button>
+                        )}
+                      </div>
                     </form>
                   </div>
                 </div>
@@ -243,6 +340,7 @@ export default function AdminDashboard() {
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <button onClick={() => handleEditCategory(c)} className="text-blue-600 hover:text-blue-800 font-semibold bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-md transition-colors cursor-pointer border border-transparent hover:border-blue-200 mr-2">Edit</button>
                               <button onClick={() => deleteCategory(c.id)} className="text-red-600 hover:text-red-800 font-semibold bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-md transition-colors cursor-pointer border border-transparent hover:border-red-200">Delete</button>
                             </td>
                           </tr>
@@ -263,9 +361,9 @@ export default function AdminDashboard() {
               
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-1">
-                  <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm md:sticky md:top-6">
-                    <h2 className="text-lg font-bold text-gray-900 mb-4">Add New Item</h2>
-                    <form onSubmit={addItem} className="space-y-4">
+                  <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm md:sticky md:top-6 transition-all">
+                    <h2 className="text-lg font-bold text-gray-900 mb-4">{editingItemId ? 'Edit Item' : 'Add New Item'}</h2>
+                    <form onSubmit={saveItem} className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                         <select required value={itemCat} onChange={e=>setItemCat(e.target.value)} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
@@ -285,6 +383,21 @@ export default function AdminDashboard() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Price (Rs.)</label>
                         <input required type="number" step="0.01" placeholder="0.00" value={itemPrice} onChange={e=>setItemPrice(e.target.value)} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
                       </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Size (Optional)</label>
+                          <select value={itemSize} onChange={e=>setItemSize(e.target.value)} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                            <option value="">None</option>
+                            <option value="S">Small (S)</option>
+                            <option value="M">Medium (M)</option>
+                            <option value="L">Large (L)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Tags (Optional)</label>
+                          <input placeholder="e.g. Veg, Spicy" value={itemTags} onChange={e=>setItemTags(e.target.value)} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+                        </div>
+                      </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Upload Image</label>
                         <input type="file" accept="image/*" onChange={e=>setItemImageFile(e.target.files?.[0] || null)} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2 text-sm file:mr-4 file:py-1.5 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" />
@@ -294,9 +407,16 @@ export default function AdminDashboard() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
                         <input placeholder="https://..." value={itemImage} onChange={e=>setItemImage(e.target.value)} className="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
                       </div>
-                      <button disabled={isUploading} type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg mt-2 disabled:opacity-50 transition-colors cursor-pointer shadow-sm">
-                        {isUploading ? 'Uploading...' : 'Create Item'}
-                      </button>
+                      <div className="flex gap-3 pt-2">
+                        <button disabled={isUploading} type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg disabled:opacity-50 transition-colors cursor-pointer shadow-sm">
+                          {isUploading ? 'Saving...' : (editingItemId ? 'Update Item' : 'Create Item')}
+                        </button>
+                        {editingItemId && (
+                          <button type="button" onClick={resetItemForm} className="px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 rounded-lg transition-colors cursor-pointer border border-gray-300">
+                            Cancel
+                          </button>
+                        )}
+                      </div>
                     </form>
                   </div>
                 </div>
@@ -321,8 +441,20 @@ export default function AdminDashboard() {
                                   {i.image_url ? <img className="h-11 w-11 rounded-lg object-cover border border-gray-200 shadow-sm" src={i.image_url} alt="" /> : <div className="h-11 w-11 rounded-lg bg-gray-100 border border-gray-200"></div>}
                                 </div>
                                 <div className="ml-4">
-                                  <div className="text-sm font-semibold text-gray-900">{i.name}</div>
+                                  <div className="text-sm font-semibold text-gray-900">
+                                    {i.name}
+                                    {i.size && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">{i.size}</span>}
+                                  </div>
                                   <div className="text-xs text-gray-500 mt-0.5 max-w-[160px] truncate">{categories.find(c => c.id === i.category_id)?.name}</div>
+                                  {i.tags && i.tags.length > 0 && (
+                                    <div className="flex gap-1 mt-1">
+                                      {i.tags.map(tag => (
+                                        <span key={tag} className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                                          {tag}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </td>
@@ -330,6 +462,7 @@ export default function AdminDashboard() {
                               <div className="text-sm font-medium text-gray-900">Rs. {i.price}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <button onClick={() => handleEditItem(i)} className="text-blue-600 hover:text-blue-800 font-semibold bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-md transition-colors cursor-pointer border border-transparent hover:border-blue-200 mr-2">Edit</button>
                               <button onClick={() => deleteItem(i.id)} className="text-red-600 hover:text-red-800 font-semibold bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-md transition-colors cursor-pointer border border-transparent hover:border-red-200">Delete</button>
                             </td>
                           </tr>

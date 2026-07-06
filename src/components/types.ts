@@ -11,6 +11,8 @@ export interface MenuItem {
   description: string;
   price: number;
   image_url: string | null;
+  size?: string;
+  tags?: string[];
 }
 
 export interface MenuData {

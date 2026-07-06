@@ -24,7 +24,27 @@ export default function MenuItemCard({ item }: { item: MenuItem }) {
       
       {/* Content below */}
       <div className="p-4 flex flex-col flex-grow relative z-10">
-        <h3 className="text-[18px] font-bold text-white leading-tight mb-2 group-hover:text-[#ff333d] transition-colors">{item.name}</h3>
+        <div className="flex flex-col gap-1 mb-2">
+          <h3 className="text-[18px] font-bold text-white leading-tight group-hover:text-[#ff333d] transition-colors flex items-center gap-2">
+            {item.name}
+            {item.size && (
+              <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-[#c21820] text-white">
+                {item.size}
+              </span>
+            )}
+          </h3>
+          {item.tags && item.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {item.tags.map(tag => (
+                <span key={tag} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-neutral-800 text-neutral-300 border border-neutral-700">
+                  {tag.toLowerCase() === 'veg' ? <span className="w-2 h-2 rounded-full bg-green-500 mr-1"></span> : null}
+                  {tag.toLowerCase() === 'non-veg' ? <span className="w-2 h-2 rounded-full bg-red-500 mr-1"></span> : null}
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
         
         {item.description && (
           <p className="text-[14px] text-neutral-400 mb-4 line-clamp-2 leading-snug">{item.description}</p>
