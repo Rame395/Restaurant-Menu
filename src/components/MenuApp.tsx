@@ -131,6 +131,10 @@ export default function MenuApp({ initialData }: { initialData: MenuData }) {
                     src={cat.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=500&q=80'} 
                     alt={cat.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null; 
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=500&q=80';
+                    }}
                   />
                   {/* Subtle darkening for contrast, no heavy gradient */}
                   <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300"></div>

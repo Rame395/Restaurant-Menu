@@ -1,19 +1,23 @@
+import { useState } from 'react';
 import { MenuItem } from './types';
 
 export default function MenuItemCard({ item }: { item: MenuItem }) {
+  const [imageError, setImageError] = useState(false);
+  
   return (
-    <div className="bg-neutral-900 rounded-[20px] overflow-hidden shadow-lg border border-neutral-800/80 flex flex-col group transition-all duration-300 hover:border-neutral-700 relative">
+    <div className="bg-neutral-900 rounded-[14px] sm:rounded-[20px] overflow-hidden shadow-lg border border-neutral-800/80 flex flex-col group transition-all duration-300 hover:border-neutral-700 relative">
       {/* Subtle hover glow on the card */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#c21820]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
 
       {/* Image at the top */}
-      <div className="w-full h-[200px] relative overflow-hidden bg-neutral-800">
-        {item.image_url ? (
+      <div className="w-full h-[130px] sm:h-[200px] relative overflow-hidden bg-neutral-800">
+        {item.image_url && !imageError ? (
           <img 
             src={item.image_url} 
             alt={item.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
             loading="lazy"
+            onError={() => setImageError(true)}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -23,9 +27,9 @@ export default function MenuItemCard({ item }: { item: MenuItem }) {
       </div>
       
       {/* Content below */}
-      <div className="p-4 flex flex-col flex-grow relative z-10">
+      <div className="p-3 sm:p-4 flex flex-col flex-grow relative z-10">
         <div className="flex flex-col gap-1 mb-2">
-          <h3 className="text-[18px] font-bold text-white leading-tight group-hover:text-[#ff333d] transition-colors flex items-center gap-2">
+          <h3 className="text-[15px] sm:text-[18px] font-bold text-white leading-tight group-hover:text-[#ff333d] transition-colors flex items-center gap-2">
             {item.name}
             {item.size && (
               <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-[#c21820] text-white">
@@ -47,11 +51,11 @@ export default function MenuItemCard({ item }: { item: MenuItem }) {
         </div>
         
         {item.description && (
-          <p className="text-[14px] text-neutral-400 mb-4 line-clamp-2 leading-snug">{item.description}</p>
+          <p className="text-[12px] sm:text-[14px] text-neutral-400 mb-3 sm:mb-4 line-clamp-2 leading-snug">{item.description}</p>
         )}
         
         <div className="mt-auto flex justify-between items-center pt-1">
-          <span className="text-[18px] font-bold text-[#fde047]">
+          <span className="text-[15px] sm:text-[18px] font-bold text-[#fde047]">
             Rs. {item.price.toFixed(2)}
           </span>
         </div>

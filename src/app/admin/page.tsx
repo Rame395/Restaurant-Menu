@@ -332,7 +332,7 @@ export default function AdminDashboard() {
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
                                 <div className="flex-shrink-0 h-11 w-11">
-                                  {c.image_url ? <img className="h-11 w-11 rounded-lg object-cover border border-gray-200 shadow-sm" src={c.image_url} alt="" /> : <div className="h-11 w-11 rounded-lg bg-gray-100 border border-gray-200"></div>}
+                                  {c.image_url ? <img className="h-11 w-11 rounded-lg object-cover border border-gray-200 shadow-sm" src={c.image_url} alt="" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <div className="h-11 w-11 rounded-lg bg-gray-100 border border-gray-200"></div>}
                                 </div>
                                 <div className="ml-4">
                                   <div className="text-sm font-semibold text-gray-900">{c.name}</div>
@@ -438,7 +438,7 @@ export default function AdminDashboard() {
                             <td className="px-6 py-4">
                               <div className="flex items-center">
                                 <div className="flex-shrink-0 h-11 w-11">
-                                  {i.image_url ? <img className="h-11 w-11 rounded-lg object-cover border border-gray-200 shadow-sm" src={i.image_url} alt="" /> : <div className="h-11 w-11 rounded-lg bg-gray-100 border border-gray-200"></div>}
+                                  {i.image_url ? <img className="h-11 w-11 rounded-lg object-cover border border-gray-200 shadow-sm" src={i.image_url} alt="" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <div className="h-11 w-11 rounded-lg bg-gray-100 border border-gray-200"></div>}
                                 </div>
                                 <div className="ml-4">
                                   <div className="text-sm font-semibold text-gray-900">
