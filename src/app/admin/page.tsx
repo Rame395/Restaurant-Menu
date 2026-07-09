@@ -41,6 +41,8 @@ export default function AdminDashboard() {
   }
 
   const [isUploading, setIsUploading] = useState(false);
+  const [dragActiveCat, setDragActiveCat] = useState(false);
+  const [dragActiveItem, setDragActiveItem] = useState(false);
 
   const [toast, setToast] = useState<{message: string, type: 'success'|'error'} | null>(null);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
@@ -182,6 +184,20 @@ export default function AdminDashboard() {
     setItemSize(i.size || '');
     setItemTags(i.tags ? i.tags.join(', ') : '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function handleDuplicateItem(i: MenuItem) {
+    setEditingItemId(null);
+    setItemName(i.name + ' (Copy)');
+    setItemDesc(i.description || '');
+    setItemPrice(i.price.toString());
+    setItemImage(i.image_url || '');
+    setItemImageFile(null);
+    setItemCat(i.category_id);
+    setItemSize(i.size || '');
+    setItemTags(i.tags ? i.tags.join(', ') : '');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    showToast('Ready to duplicate. Edit details and click Create Item.', 'success');
   }
 
   async function saveItem(e: React.FormEvent) {
@@ -345,8 +361,29 @@ export default function AdminDashboard() {
                         <input required placeholder="e.g. Salads" value={catName} onChange={e=>setCatName(e.target.value)} className="w-full bg-gray-50 dark:bg-neutral-950 dark:text-white border border-gray-300 dark:border-neutral-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-1">Upload Image</label>
-                        <input type="file" accept="image/*" onChange={e=>setCatImageFile(e.target.files?.[0] || null)} className="w-full bg-gray-50 dark:bg-neutral-950 border border-gray-300 dark:border-neutral-700 rounded-lg p-2 text-sm text-gray-900 dark:text-white file:mr-4 file:py-1.5 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-neutral-800 file:text-blue-700 dark:file:text-white hover:file:bg-blue-100 cursor-pointer" />
+                        <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-2">Upload Image</label>
+                        <div 
+                          className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all ${dragActiveCat ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-neutral-700 hover:border-gray-400 dark:hover:border-neutral-500'} ${catImageFile ? 'bg-gray-50 dark:bg-neutral-900' : ''}`}
+                          onDragOver={(e) => { e.preventDefault(); setDragActiveCat(true); }}
+                          onDragLeave={() => setDragActiveCat(false)}
+                          onDrop={(e) => { e.preventDefault(); setDragActiveCat(false); if (e.dataTransfer.files && e.dataTransfer.files[0]) setCatImageFile(e.dataTransfer.files[0]); }}
+                        >
+                          <input type="file" accept="image/*" onChange={e=>setCatImageFile(e.target.files?.[0] || null)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                          
+                          {catImageFile ? (
+                            <div className="flex flex-col items-center">
+                              <img src={URL.createObjectURL(catImageFile)} alt="Preview" className="h-24 object-contain mb-3 rounded shadow-sm" />
+                              <span className="text-sm text-gray-600 dark:text-neutral-300 font-medium bg-white dark:bg-neutral-800 px-3 py-1 rounded-full border border-gray-200 dark:border-neutral-700">{catImageFile.name}</span>
+                              <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">Click or drag to change</p>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center pointer-events-none">
+                              <svg className={`w-10 h-10 mb-3 ${dragActiveCat ? 'text-blue-500' : 'text-gray-400 dark:text-neutral-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                              <p className="text-sm font-medium text-gray-700 dark:text-neutral-300 mb-1">Drag and drop an image here</p>
+                              <p className="text-xs text-gray-500 dark:text-neutral-500">or click to browse from your computer</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <div className="text-center text-xs text-gray-400 dark:text-neutral-500 font-medium">- OR -</div>
                       <div>
@@ -437,12 +474,23 @@ export default function AdminDashboard() {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-1">Size (Optional)</label>
-                          <select value={itemSize} onChange={e=>setItemSize(e.target.value)} className="w-full bg-gray-50 dark:bg-neutral-950 dark:text-white border border-gray-300 dark:border-neutral-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
-                            <option value="">None</option>
-                            <option value="S">Small (S)</option>
-                            <option value="M">Medium (M)</option>
-                            <option value="L">Large (L)</option>
-                          </select>
+                          <input 
+                            type="text" 
+                            list="size-options"
+                            placeholder="e.g. Small, 500ml, 12-inch"
+                            value={itemSize} 
+                            onChange={e=>setItemSize(e.target.value)} 
+                            className="w-full bg-gray-50 dark:bg-neutral-950 dark:text-white border border-gray-300 dark:border-neutral-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" 
+                          />
+                          <datalist id="size-options">
+                            <option value="Small" />
+                            <option value="Medium" />
+                            <option value="Large" />
+                            <option value="Full" />
+                            <option value="Half" />
+                            <option value="500ml" />
+                            <option value="1 Liter" />
+                          </datalist>
                         </div>
                       </div>
                       
@@ -478,8 +526,29 @@ export default function AdminDashboard() {
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-1">Upload Image</label>
-                        <input type="file" accept="image/*" onChange={e=>setItemImageFile(e.target.files?.[0] || null)} className="w-full bg-gray-50 dark:bg-neutral-950 border border-gray-300 dark:border-neutral-700 rounded-lg p-2 text-sm text-gray-900 dark:text-white file:mr-4 file:py-1.5 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-neutral-800 file:text-blue-700 dark:file:text-white hover:file:bg-blue-100 cursor-pointer" />
+                        <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-2">Upload Image</label>
+                        <div 
+                          className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all ${dragActiveItem ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-neutral-700 hover:border-gray-400 dark:hover:border-neutral-500'} ${itemImageFile ? 'bg-gray-50 dark:bg-neutral-900' : ''}`}
+                          onDragOver={(e) => { e.preventDefault(); setDragActiveItem(true); }}
+                          onDragLeave={() => setDragActiveItem(false)}
+                          onDrop={(e) => { e.preventDefault(); setDragActiveItem(false); if (e.dataTransfer.files && e.dataTransfer.files[0]) setItemImageFile(e.dataTransfer.files[0]); }}
+                        >
+                          <input type="file" accept="image/*" onChange={e=>setItemImageFile(e.target.files?.[0] || null)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                          
+                          {itemImageFile ? (
+                            <div className="flex flex-col items-center">
+                              <img src={URL.createObjectURL(itemImageFile)} alt="Preview" className="h-24 object-contain mb-3 rounded shadow-sm" />
+                              <span className="text-sm text-gray-600 dark:text-neutral-300 font-medium bg-white dark:bg-neutral-800 px-3 py-1 rounded-full border border-gray-200 dark:border-neutral-700">{itemImageFile.name}</span>
+                              <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">Click or drag to change</p>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center pointer-events-none">
+                              <svg className={`w-10 h-10 mb-3 ${dragActiveItem ? 'text-blue-500' : 'text-gray-400 dark:text-neutral-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                              <p className="text-sm font-medium text-gray-700 dark:text-neutral-300 mb-1">Drag and drop an image here</p>
+                              <p className="text-xs text-gray-500 dark:text-neutral-500">or click to browse from your computer</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <div className="text-center text-xs text-gray-400 dark:text-neutral-500 font-medium">- OR -</div>
                       <div>
@@ -565,6 +634,7 @@ export default function AdminDashboard() {
                               <div className="text-sm font-medium text-gray-900 dark:text-white">Rs. {i.price}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <button onClick={() => handleDuplicateItem(i)} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-semibold bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-neutral-700 px-3 py-1.5 rounded-md transition-colors cursor-pointer border border-transparent mr-2">Duplicate</button>
                               <button onClick={() => handleEditItem(i)} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-semibold bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 px-3 py-1.5 rounded-md transition-colors cursor-pointer border border-transparent mr-2">Edit</button>
                               <button onClick={() => deleteItem(i.id)} className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-semibold bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 px-3 py-1.5 rounded-md transition-colors cursor-pointer border border-transparent">Delete</button>
                             </td>
