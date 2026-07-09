@@ -35,10 +35,7 @@ export default function MenuApp({ initialData }: { initialData: MenuData }) {
     return 0;
   });
 
-  const handleCloseSearch = () => {
-    setIsSearchOpen(false);
-    setSearchQuery('');
-  };
+
 
   const handleCategoryClick = (catId: string) => {
     setActiveCategory(catId);
