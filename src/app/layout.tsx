@@ -23,8 +23,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark scroll-smooth">
-      <body className={`${inter.className} ${playfair.variable} bg-[#201409] text-white antialiased`}>
+    <html lang="en" className="dark scroll-smooth" suppressHydrationWarning>
+      <body className={`${inter.className} ${playfair.variable} bg-[#201409] text-white antialiased`} suppressHydrationWarning>
         {children}
       </body>
     </html>

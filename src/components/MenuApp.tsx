@@ -9,6 +9,7 @@ export default function MenuApp({ initialData }: { initialData: MenuData }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSize, setActiveSize] = useState<string | null>(null);
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [sortOption, setSortOption] = useState<'default' | 'price-low' | 'price-high'>('default');
 
   const activeCategoryData = initialData.categories.find(c => c.id === activeCategory);
   
@@ -28,6 +29,10 @@ export default function MenuApp({ initialData }: { initialData: MenuData }) {
     const matchesSize = activeSize === null || item.size === activeSize;
     const matchesTag = activeTag === null || (item.tags && item.tags.includes(activeTag));
     return matchesSearch && matchesSize && matchesTag;
+  }).sort((a, b) => {
+    if (sortOption === 'price-low') return a.price - b.price;
+    if (sortOption === 'price-high') return b.price - a.price;
+    return 0;
   });
 
   const handleCloseSearch = () => {
@@ -185,46 +190,62 @@ export default function MenuApp({ initialData }: { initialData: MenuData }) {
             </div>
           )}
 
-          {/* Filter Bar */}
-          {(availableSizes.length > 0 || availableTags.length > 0) && (
-            <div className="px-4 py-3 border-b border-neutral-900/60 bg-neutral-900/20 overflow-x-auto whitespace-nowrap scrollbar-hide flex gap-2 items-center">
-              <span className="text-[12px] font-bold text-neutral-500 uppercase tracking-wider mr-2">Filters:</span>
-              
-              {availableSizes.length > 0 && (
-                <div className="flex gap-2 border-r border-neutral-800 pr-4 mr-2">
-                  {availableSizes.map(size => (
+          {/* Filter & Sort Bar */}
+          <div className="px-4 py-3 border-b border-neutral-900/60 bg-neutral-900/20 overflow-x-auto whitespace-nowrap scrollbar-hide flex gap-4 items-center justify-between">
+            <div className="flex gap-2 items-center">
+              {(availableSizes.length > 0 || availableTags.length > 0) ? (
+                <>
+                  <span className="text-[12px] font-bold text-neutral-500 uppercase tracking-wider mr-2">Filters:</span>
+                  
+                  {availableSizes.length > 0 && (
+                    <div className="flex gap-2 border-r border-neutral-800 pr-4 mr-2">
+                      {availableSizes.map(size => (
+                        <button
+                          key={size}
+                          onClick={() => setActiveSize(activeSize === size ? null : size)}
+                          className={`px-3 py-1 rounded-full text-[13px] font-bold transition-all border ${
+                            activeSize === size 
+                              ? 'bg-[#c21820] text-white border-[#c21820] shadow-[0_0_10px_rgba(194,24,32,0.4)]' 
+                              : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600'
+                          }`}
+                        >
+                          Size: {size}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {availableTags.map(tag => (
                     <button
-                      key={size}
-                      onClick={() => setActiveSize(activeSize === size ? null : size)}
-                      className={`px-3 py-1 rounded-full text-[13px] font-bold transition-all border ${
-                        activeSize === size 
-                          ? 'bg-[#c21820] text-white border-[#c21820] shadow-[0_0_10px_rgba(194,24,32,0.4)]' 
+                      key={tag}
+                      onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+                      className={`px-3 py-1 rounded-full text-[13px] font-bold transition-all border flex items-center gap-1 ${
+                        activeTag === tag 
+                          ? 'bg-neutral-800 text-white border-neutral-500' 
                           : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600'
                       }`}
                     >
-                      Size: {size}
+                      {tag.toLowerCase() === 'veg' && <span className={`w-2 h-2 rounded-full ${activeTag === tag ? 'bg-green-400' : 'bg-green-600'}`}></span>}
+                      {tag.toLowerCase() === 'non-veg' && <span className={`w-2 h-2 rounded-full ${activeTag === tag ? 'bg-red-400' : 'bg-red-600'}`}></span>}
+                      {tag}
                     </button>
                   ))}
-                </div>
+                </>
+              ) : (
+                <span className="text-[12px] font-bold text-neutral-500 uppercase tracking-wider mr-2">All Items</span>
               )}
-
-              {availableTags.map(tag => (
-                <button
-                  key={tag}
-                  onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-                  className={`px-3 py-1 rounded-full text-[13px] font-bold transition-all border flex items-center gap-1 ${
-                    activeTag === tag 
-                      ? 'bg-neutral-800 text-white border-neutral-500' 
-                      : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-neutral-600'
-                  }`}
-                >
-                  {tag.toLowerCase() === 'veg' && <span className={`w-2 h-2 rounded-full ${activeTag === tag ? 'bg-green-400' : 'bg-green-600'}`}></span>}
-                  {tag.toLowerCase() === 'non-veg' && <span className={`w-2 h-2 rounded-full ${activeTag === tag ? 'bg-red-400' : 'bg-red-600'}`}></span>}
-                  {tag}
-                </button>
-              ))}
             </div>
-          )}
+
+            <select 
+              value={sortOption} 
+              onChange={(e) => setSortOption(e.target.value as any)}
+              className="bg-neutral-900 border border-neutral-700 text-neutral-300 text-[13px] font-bold rounded-lg px-2 py-1.5 outline-none ml-4 flex-shrink-0 focus:border-[#d91616] cursor-pointer"
+            >
+              <option value="default">Sort: Default</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+            </select>
+          </div>
 
           <div className="pt-4 pb-8 animate-slide-up" style={{ animationDelay: '0.05s' }}>
             <MenuGrid items={filteredItems} />
