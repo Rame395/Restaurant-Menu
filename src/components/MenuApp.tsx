@@ -97,17 +97,20 @@ export default function MenuApp({ initialData }: { initialData: MenuData }) {
         <div className="max-w-3xl mx-auto pb-12 animate-fade-in">
           {/* Dynamic Hero Section */}
           {searchQuery.trim() === '' && (
-            <div className="w-full relative overflow-hidden flex flex-col items-center justify-center py-16 mb-4">
+            <div className="w-[calc(100%-2rem)] mx-4 mt-6 relative overflow-hidden flex flex-col items-center justify-center py-20 mb-8 rounded-[2.5rem] bg-gradient-to-br from-neutral-900/90 to-[#201409]/90 border border-neutral-700/50 shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
               {/* Abstract blurred background shapes */}
-              <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[140%] bg-[#c21820] rounded-full blur-[100px] opacity-20 pointer-events-none"></div>
-              <div className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[120%] bg-[#fde047] rounded-full blur-[100px] opacity-[0.12] pointer-events-none"></div>
+              <div className="absolute top-[-30%] left-[-10%] w-[60%] h-[150%] bg-[#d91616] rounded-full blur-[120px] opacity-[0.15] pointer-events-none"></div>
+              <div className="absolute bottom-[-30%] right-[-10%] w-[50%] h-[130%] bg-[#fde047] rounded-full blur-[120px] opacity-[0.08] pointer-events-none"></div>
               
-              <div className="relative z-10 flex flex-col items-center text-center px-4 animate-slide-up">
-                <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight mb-3">
-                  Cravings, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff333d] to-[#c21820]">Satisfied.</span>
+              <div className="relative z-10 flex flex-col items-center text-center px-6 animate-slide-up">
+                <span className="px-4 py-1.5 rounded-full bg-[#d91616]/10 text-[#ff333d] border border-[#d91616]/20 text-[13px] font-bold tracking-[0.15em] mb-6 uppercase shadow-sm">
+                  Welcome to Tufani
+                </span>
+                <h1 className="text-5xl sm:text-6xl font-black text-white tracking-tight mb-5" style={{ textShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
+                  Taste the <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff333d] to-[#fde047]">Storm.</span>
                 </h1>
-                <p className="text-neutral-400 text-[15px] sm:text-[17px] font-medium max-w-[280px] sm:max-w-md leading-relaxed">
-                  Explore our premium selection of wood-fired pizzas, appetizers, and more.
+                <p className="text-neutral-300 text-[16px] sm:text-[18px] font-medium max-w-[320px] sm:max-w-lg leading-relaxed shadow-sm">
+                  Experience our premium selection of wood-fired pizzas, gourmet appetizers, and hand-crafted delicacies.
                 </p>
               </div>
             </div>
@@ -122,34 +125,36 @@ export default function MenuApp({ initialData }: { initialData: MenuData }) {
 
           {/* Premium Category Grid */}
           {filteredCategories.length > 0 ? (
-            <div className="px-4 grid grid-cols-2 gap-x-5 gap-y-8 mt-4 mb-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            <div className="px-4 grid grid-cols-2 gap-x-4 gap-y-6 mt-4 mb-10 animate-slide-up" style={{ animationDelay: '0.1s' }}>
               {filteredCategories.map((cat: Category) => (
                 <button 
                   key={cat.id} 
                   onClick={() => handleCategoryClick(cat.id)}
-                  className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-[0_8px_20px_rgba(0,0,0,0.4)] cursor-pointer group active:scale-[0.97] transition-all duration-300 border border-neutral-800/40 p-0 outline-none focus:ring-2 focus:ring-[#d91616]"
+                  className="relative aspect-[4/5] sm:aspect-square rounded-[2rem] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)] cursor-pointer group active:scale-[0.98] transition-all duration-500 border border-neutral-800/60 p-0 outline-none focus:ring-2 focus:ring-[#d91616] bg-neutral-900"
                 >
                   <img 
                     src={cat.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=500&q=80'} 
                     alt={cat.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                    className="w-full h-full object-cover group-hover:scale-110 group-hover:rotate-1 transition-transform duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
                     onError={(e) => {
                       e.currentTarget.onerror = null; 
                       e.currentTarget.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=500&q=80';
                     }}
                   />
-                  {/* Subtle darkening for contrast, no heavy gradient */}
-                  <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300"></div>
+                  {/* Elegant Vignette & Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#120a05]/95 via-[#120a05]/40 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500"></div>
                   
-                  <div className="absolute bottom-3 inset-x-0 flex items-center justify-center transform group-hover:-translate-y-1 transition-transform duration-300">
+                  <div className="absolute inset-0 p-5 flex flex-col justify-end transform transition-transform duration-500 text-left">
                     <span 
-                      className="text-[#fdf8f5] font-bold text-[20px] sm:text-[24px] tracking-wide"
+                      className="text-[#fdf8f5] font-black text-[22px] sm:text-[26px] tracking-tight leading-none mb-1 group-hover:-translate-y-1 transition-transform duration-500"
                       style={{ 
-                        fontFamily: 'var(--font-playfair), serif',
-                        textShadow: '0 2px 4px rgba(0,0,0,0.9), 0 0 12px rgba(217,119,6,0.6), 1px 1px 0 rgba(0,0,0,0.5)' 
+                        textShadow: '0 2px 10px rgba(0,0,0,0.8)' 
                       }}
                     >
                       {cat.name}
+                    </span>
+                    <span className="text-[#fde047] font-semibold text-[13px] opacity-0 group-hover:opacity-100 group-hover:-translate-y-1 transition-all duration-500 delay-[50ms] tracking-wide">
+                      Explore menu &rarr;
                     </span>
                   </div>
                 </button>
